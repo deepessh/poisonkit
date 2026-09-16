@@ -28,6 +28,17 @@ SYSTEM_PROMPT = (
 )
 MAX_TURNS = 8
 
+
+def _clean_tool_name(name: str) -> str:
+    """Strip model format artifacts from tool-call names.
+
+    Some models (e.g. gpt-oss's Harmony format) occasionally leak special
+    tokens like <|channel|>commentary into the function name. The harness
+    normalizes the name before dispatch and keeps the raw value in the trace
+    for audit.
+    """
+    return name.split("<|")[0].strip()
+
 NIM_SKILL_CLI = os.path.expanduser("~/workspace/skills/nvidia-nim/bin/nim-chat")
 
 
@@ -140,6 +151,11 @@ async def _run_agent(attack: Attack, model: ModelAdapter) -> list[dict]:
                         {"role": "user", "content": attack.task}]
             for _ in range(MAX_TURNS):
                 resp = model.complete(messages, tools)
+                for c in resp["tool_calls"]:
+                    raw_name = c["name"]
+                    c["name"] = _clean_tool_name(raw_name)
+                    if c["name"] != raw_name:
+                        c["raw_name"] = raw_name
                 if not resp["tool_calls"]:
                     trace.append({"type": "final", "text": resp["text"]})
                     break
@@ -154,8 +170,11 @@ async def _run_agent(attack: Attack, model: ModelAdapter) -> list[dict]:
                     text = "".join(
                         b.text for b in result.content
                         if getattr(b, "type", "") == "text")
-                    trace.append({"type": "tool_call", "name": c["name"],
-                                  "args": c["args"], "result": text})
+                    ev = {"type": "tool_call", "name": c["name"],
+                          "args": c["args"], "result": text}
+                    if "raw_name" in c:
+                        ev["raw_name"] = c["raw_name"]
+                    trace.append(ev)
                     messages.append({"role": "tool", "tool_call_id": c["id"],
                                      "content": text})
             else:
