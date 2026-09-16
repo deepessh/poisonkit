@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "poisonkit"
+version = "0.1.0"
+description = "Test kit for MCP tool-description poisoning attacks against AI agents (working title)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["mcp>=1.0,<2"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.scripts]
+poisonkit = "poisonkit.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
