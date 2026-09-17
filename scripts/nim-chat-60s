@@ -1,0 +1,110 @@
+#!/usr/bin/env python3
+"""nim-chat-60s: poisonkit-local variant of the nvidia-nim skill's nim-chat
+with the HTTP read timeout reduced 180s -> 60s. The NIM free tier sometimes
+accepts a request and then stalls without responding; a healthy call finishes
+in well under 60s, so failing fast makes client-side retries cheap. Not for
+general use — experiment harness only.
+
+Original: ~/workspace/skills/nvidia-nim/bin/nim-chat.
+
+Reads JSON {"messages": [...], "tools": [...]} on stdin, POSTs to
+https://integrate.api.nvidia.com/v1/chat/completions with the stored
+credential attached as an authd surrogate, and prints
+{"tool_calls": [{"id","name","args"}], "text": "..."} on stdout.
+
+Usage: nim-chat --model meta/llama-3.3-70b-instruct < payload.json
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+import time
+import urllib.error
+import urllib.request
+
+sys.path.insert(0, "/opt/hatch/skills/skill-creator/bin")
+from dynamic_credentials import (  # noqa: E402
+    DynamicCredentialError,
+    add_surrogate_to_request,
+    read_json_response,
+)
+
+BASE_URL = "https://integrate.api.nvidia.com/v1"
+ALLOWED_HOSTS = ["integrate.api.nvidia.com"]
+CREDENTIAL_NAME = "custom.nvidia"
+MAX_ATTEMPTS = 3
+
+
+def _post(payload: dict) -> dict:
+    data = json.dumps(payload).encode()
+    last_err: Exception | None = None
+    for attempt in range(MAX_ATTEMPTS):
+        req = urllib.request.Request(
+            BASE_URL + "/chat/completions",
+            data=data,
+            headers={"Content-Type": "application/json"},
+        )
+        add_surrogate_to_request(
+            req, CREDENTIAL_NAME, allowed_hosts=ALLOWED_HOSTS)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return read_json_response(resp)
+        except urllib.error.HTTPError as e:
+            if e.code in (429, 500, 502, 503) and attempt < MAX_ATTEMPTS - 1:
+                time.sleep(30 * (2 ** attempt))  # gentle backoff: 30s, 60s
+                last_err = e
+                continue
+            body = e.read().decode(errors="replace")[:500]
+            raise DynamicCredentialError(
+                f"NIM returned HTTP {e.code}: {body}") from e
+        except (TimeoutError, urllib.error.URLError) as e:
+            # The free tier sometimes accepts a connection and then never
+            # responds. Fail fast (60s) and retry with backoff rather than
+            # abandoning the whole run on one stalled call.
+            if attempt < MAX_ATTEMPTS - 1:
+                time.sleep(30 * (2 ** attempt))
+                last_err = e
+                continue
+            raise DynamicCredentialError(
+                f"NIM stalled (no response) after {MAX_ATTEMPTS} attempts: "
+                f"{type(e).__name__}") from e
+    raise DynamicCredentialError(f"NIM retries exhausted: {last_err}")
+
+
+def main() -> int:
+    p = argparse.ArgumentParser()
+    p.add_argument("--model", required=True)
+    ns = p.parse_args()
+    payload = json.load(sys.stdin)
+    body = _post({
+        "model": ns.model,
+        "messages": payload["messages"],
+        "tools": [
+            {"type": "function", "function": {
+                "name": t["name"],
+                "description": t["description"],
+                "parameters": t["parameters"],
+            }}
+            for t in payload.get("tools", [])
+        ],
+    })
+    msg = body["choices"][0]["message"]
+    calls = []
+    for tc in msg.get("tool_calls") or []:
+        fn = tc["function"]
+        calls.append({
+            "id": tc["id"],
+            "name": fn["name"],
+            "args": json.loads(fn["arguments"] or "{}"),
+        })
+    json.dump({"tool_calls": calls, "text": msg.get("content") or ""}, sys.stdout)
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except DynamicCredentialError as e:
+        print(f"nim-chat: {e}", file=sys.stderr)
+        sys.exit(1)

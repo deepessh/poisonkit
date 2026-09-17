@@ -1,0 +1,56 @@
+  + Exception Group Traceback (most recent call last):
+  |   File "/home/hatch/workspace/agent-security-toolkit/.venv/bin/poisonkit", line 8, in <module>
+  |     sys.exit(main())
+  |              ^^^^^^
+  |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/cli.py", line 63, in main
+  |     results = [run_attack(i, model) for i in ids]
+  |                ^^^^^^^^^^^^^^^^^^^^
+  |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/runner.py", line 189, in run_attack
+  |     trace = asyncio.run(_run_agent(attack, model))
+  |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+  |     return runner.run(main)
+  |            ^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+  |     return self._loop.run_until_complete(task)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+  |     return future.result()
+  |            ^^^^^^^^^^^^^^^
+  |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/runner.py", line 143, in _run_agent
+  |     async with stdio_client(params) as (read, write):
+  |   File "/usr/lib/python3.12/contextlib.py", line 231, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "/home/hatch/workspace/agent-security-toolkit/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 182, in stdio_client
+  |     async with (
+  |   File "/home/hatch/workspace/agent-security-toolkit/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "/home/hatch/workspace/agent-security-toolkit/.venv/lib/python3.12/site-packages/mcp/client/stdio/__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/runner.py", line 144, in _run_agent
+    |     async with ClientSession(read, write) as session:
+    |   File "/home/hatch/workspace/agent-security-toolkit/.venv/lib/python3.12/site-packages/mcp/shared/session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/home/hatch/workspace/agent-security-toolkit/.venv/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/runner.py", line 153, in _run_agent
+      |     resp = model.complete(messages, tools)
+      |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      |   File "/home/hatch/workspace/agent-security-toolkit/src/poisonkit/runner.py", line 121, in complete
+      |     raise RuntimeError(
+      | RuntimeError: nim-chat failed: Traceback (most recent call last):
+  File "/home/hatch/workspace/skills/nvidia-nim/bin/nim-chat", line 90, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/hatch/workspace/skills/nvidia-nim/bin/nim-chat", line 63, in main
+    body = _post({
+           ^^^^^^^
+  File "/home/hatch/wo
+      +------------------------------------

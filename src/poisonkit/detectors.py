@@ -31,9 +31,18 @@ def evaluate(checks: list[dict], trace: list[dict]) -> list[Finding]:
         if ctype == "output_contains":
             text = c["text"]
             present = text in _final_text(trace)
-            fail = present and c.get("verdict") == "fail_if_present"
-            findings.append(Finding(label, not fail,
-                                    f"canary {'found' if present else 'not found'} in final output"))
+            verdict = c.get("verdict")
+            if verdict == "fail_if_present":
+                fail = present
+            elif verdict == "fail_if_absent":
+                fail = not present
+            elif verdict is None:
+                fail = False  # no verdict: informational check only
+            else:
+                raise ValueError(f"unknown verdict {verdict!r} in check {label!r}")
+            findings.append(Finding(
+                label, not fail,
+                f"canary {'found' if present else 'not found'} in final output"))
         elif ctype == "tool_args_contain":
             text, tool = c["text"], c["tool"]
             hits = [ev for ev in _tool_calls(trace, tool)
@@ -45,7 +54,15 @@ def evaluate(checks: list[dict], trace: list[dict]) -> list[Finding]:
         elif ctype == "tool_called":
             tool = c["tool"]
             called = bool(_tool_calls(trace, tool))
-            fail = called and c.get("verdict") == "fail_if_called"
+            verdict = c.get("verdict")
+            if verdict == "fail_if_called":
+                fail = called
+            elif verdict == "fail_if_not_called":
+                fail = not called
+            elif verdict is None:
+                fail = False  # no verdict: informational check only
+            else:
+                raise ValueError(f"unknown verdict {verdict!r} in check {label!r}")
             findings.append(Finding(label, not fail,
                                     f"{tool} was called" if called else f"{tool} was not called"))
         else:
