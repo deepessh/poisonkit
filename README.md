@@ -86,17 +86,20 @@ fired) from **RESIST** (the model held on its own).
 | `desc-pin` | Hashes tool descriptions + schemas at discovery; restores the pinned copy if a later listing differs | rug-pull |
 | `output-scan` | Scans tool outputs for injected-instruction signatures before they reach the model; redacts matches | rag-poison |
 | `confirm-all` | Blocks destructive-class tool calls pending explicit user confirmation, regardless of what the tool description claims | confirm-bypass |
+| `schema-scan` | Scans the tool description plus every nested parameter/schema `description` string for injected-instruction signatures at listing time; replaces matches with a block notice before the model sees them | param-poison |
 
 Defenses are deliberately simple and deterministic — they are the guardrail
 under test, not a second agent. Measured results (attack reduction +
 false-positive rates on the benign corpus) are in
 [`results/DEFENSE-REPORT.md`](results/DEFENSE-REPORT.md).
 
-Note: none of the three defenses counters `param-poison` — its payload lives
-in a *static* parameter description, so `desc-pin` pins the poisoned schema at
-discovery, `output-scan` only inspects tool outputs, and `confirm-all` only
-fires on destructive-class tools. That gap is a finding, not an oversight:
-schema-level poisoning has no defense in this suite.
+Note: `param-poison`'s payload lives in a *static* parameter description, so
+`desc-pin` pins the poisoned schema at discovery, `output-scan` only inspects
+tool outputs, and `confirm-all` only fires on destructive-class tools. That
+gap is covered by `schema-scan`, which scans descriptions *and* nested
+parameter/schema documentation for injected-instruction signatures and
+redacts matches before the model sees them (offline-verified; see
+[`results/DEFENSE-REPORT.md`](results/DEFENSE-REPORT.md)).
 
 ## Benign corpus
 

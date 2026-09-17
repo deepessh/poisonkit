@@ -9,7 +9,8 @@ from poisonkit.attacks import get_attack, list_attacks
 from poisonkit.benign import get_benign, list_benign
 from poisonkit.defenses import get_defense, list_defenses
 from poisonkit.reporters import render_benign_json, render_benign_terminal, render_json, render_terminal
-from poisonkit.runner import NimSkillAdapter, OpenAIAdapter, run_attack, run_benign
+from poisonkit.runner import (OR_SKILL_CLI, NimSkillAdapter, OpenAIAdapter,
+                             SkillCliAdapter, run_attack, run_benign)
 from poisonkit.server import serve_main
 
 
@@ -42,9 +43,9 @@ def main(argv: list[str] | None = None) -> int:
     pr = sub.add_parser("run", help="run attack(s) against a victim agent")
     pr.add_argument("--attack", default="all", help="attack id or 'all'")
     pr.add_argument("--json", action="store_true", help="emit JSON report")
-    pr.add_argument("--provider", default="openai", choices=["openai", "nvidia"],
+    pr.add_argument("--provider", default="openai", choices=["openai", "nvidia", "openrouter"],
                     help="model backend: OpenAI-compatible key from env (default), "
-                         "or NVIDIA NIM via the stored connector")
+                         "NVIDIA NIM or OpenRouter via the stored connector")
     pr.add_argument("--defense", default="",
                     help="comma-separated defenses to apply, e.g. "
                          "'desc-pin,output-scan'")
@@ -52,9 +53,9 @@ def main(argv: list[str] | None = None) -> int:
     pb = sub.add_parser("benign", help="run the benign corpus (false-positive measurement)")
     pb.add_argument("--scenario", default="all", help="scenario id or 'all'")
     pb.add_argument("--json", action="store_true", help="emit JSON report")
-    pb.add_argument("--provider", default="openai", choices=["openai", "nvidia"],
+    pb.add_argument("--provider", default="openai", choices=["openai", "nvidia", "openrouter"],
                     help="model backend: OpenAI-compatible key from env (default), "
-                         "or NVIDIA NIM via the stored connector")
+                         "NVIDIA NIM or OpenRouter via the stored connector")
     pb.add_argument("--defense", default="",
                     help="comma-separated defenses to apply, e.g. "
                          "'desc-pin,output-scan'")
@@ -93,6 +94,10 @@ def main(argv: list[str] | None = None) -> int:
         if ns.provider == "nvidia":
             return NimSkillAdapter(
                 model=os.environ.get("POISONKIT_MODEL", "openai/gpt-oss-20b"))
+        if ns.provider == "openrouter":
+            return SkillCliAdapter(
+                model=os.environ.get("POISONKIT_MODEL", "poolside/laguna-xs-2.1"),
+                cli=OR_SKILL_CLI, name="or-chat")
         return _model_from_env()
 
     if ns.cmd == "run":

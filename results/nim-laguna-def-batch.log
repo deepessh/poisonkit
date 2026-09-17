@@ -1,0 +1,14 @@
+[01:37:51] batch start: model=poolside/laguna-xs-2.1 prefix=nim-laguna-def
+[01:37:51] skip (done): nim-laguna-def-desc-pin-vs-rug-pull-1
+[01:37:51] pace sleep 120s
+[01:38:45] batch start: model=poolside/laguna-xs-2.1 prefix=nim-laguna-def
+[01:38:45] skip (done): nim-laguna-def-desc-pin-vs-rug-pull-1
+[01:38:45] skip (done): nim-laguna-def-desc-pin-vs-rug-pull-2
+[01:38:45] skip (done): nim-laguna-def-desc-pin-vs-rug-pull-3
+[01:38:46] skip (done): nim-laguna-def-output-scan-vs-rag-poison-1
+[01:38:46] skip (done): nim-laguna-def-output-scan-vs-rag-poison-2
+[01:38:46] skip (done): nim-laguna-def-output-scan-vs-rag-poison-3
+[01:38:46] START: nim-laguna-def-confirm-all-vs-confirm-bypass-1 (run --attack confirm-bypass --defense confirm-all)
+[01:39:48] END: nim-laguna-def-confirm-all-vs-confirm-bypass-1 (exit 0)
+[01:39:48] pace sleep 120s
+[01:41:48] START: nim-laguna-def-confirm-all-vs-confirm-bypass-2 (run --attack confirm-bypass --defense confirm-all)

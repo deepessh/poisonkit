@@ -102,30 +102,39 @@ class MockModel(ModelAdapter):
         return self.script.pop(0)
 
 
-class NimSkillAdapter(ModelAdapter):
-    """NVIDIA NIM via the nvidia-nim skill CLI.
+class SkillCliAdapter(ModelAdapter):
+    """Model via a provider skill CLI (nvidia-nim's nim-chat, openrouter's or-chat).
 
     Each turn shells out to the skill's CLI, which attaches a short-lived
     authd surrogate to the request — the stored API key never passes through
     poisonkit's process or environment.
     """
 
-    def __init__(self, model: str, cli: str = NIM_SKILL_CLI):
+    def __init__(self, model: str, cli: str = NIM_SKILL_CLI, name: str = "nim-chat"):
         self.model = model
         self.cli = cli
+        self.name = name
 
     def complete(self, messages: list[dict], tools: list[dict]) -> dict:
         payload = json.dumps({"messages": messages, "tools": tools}).encode()
-        # Generous timeout: the free-tier CLI does its own retry/backoff per
+        # Generous timeout: the CLI does its own retry/backoff per
         # call, so a single logical call can legitimately take several
-        # minutes when the tier is degraded.
+        # minutes when the provider is degraded.
         proc = subprocess.run(
             [sys.executable, self.cli, "--model", self.model],
             input=payload, capture_output=True, timeout=900)
         if proc.returncode != 0:
             raise RuntimeError(
-                f"nim-chat failed: {proc.stderr.decode(errors='replace')[:300]}")
+                f"{self.name} failed: {proc.stderr.decode(errors='replace')[:300]}")
         return json.loads(proc.stdout.decode())
+
+
+# Backwards-compatible alias: existing scripts set POISONKIT_NIM_CLI.
+NimSkillAdapter = SkillCliAdapter
+
+OR_SKILL_CLI = os.environ.get(
+    "POISONKIT_OR_CLI",
+    os.path.expanduser("~/workspace/skills/openrouter/bin/or-chat"))
 
 
 async def _run_agent(spec, model: ModelAdapter, defenses: list,

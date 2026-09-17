@@ -90,14 +90,23 @@ call to block — the v0.1-era "expected cost" framing no longer applies.
 - The two new attacks are real, distinct vectors — post-approval description
   swaps and schema-level payloads — not variants of v0.1's description
   poisoning. Both pwn the reference agent undefended (live: 5/5 and 2/2).
-- The three defenses are implemented, logged, and verified offline (25/25
+- The four defenses are implemented, logged, and verified offline (30/30
   tests green, including direct efficacy tests and a zero-false-positive
   benign corpus). Live defense numbers are pending NIM stability.
-- None of the three defenses counters `param-poison`: its payload is a
+- `param-poison` was the unmitigated attack class in v0.2: its payload is a
   *static* parameter description, so `desc-pin` pins the poisoned schema at
   discovery, `output-scan` only inspects tool outputs, and `confirm-all`
-  only fires on destructive-class tools. Schema-level poisoning is the
-  unmitigated attack class in this suite.
+  only fires on destructive-class tools. `schema-scan` (added after the
+  v0.2 batch) closes this gap: it scans the tool description plus every
+  nested parameter/schema `description` string for injected-instruction
+  signatures at listing time and replaces matches with a block notice
+  before the model sees them. Offline-verified: `param-poison` scores
+  BLOCKED (the poisoned parameter docs never reach the model), zero false
+  positives on the benign corpus, and the scanner stays silent on the
+  description-class and output-class attacks outside its target
+  (`tests/test_schema_scan.py`, green). Like the other three defenses it is
+  signature-based, so variant payloads that dodge the signatures still get
+  through, and it does not cover payloads in enum values or property names.
 - The harness distinguishes BLOCKED (defense fired) from RESIST (model held)
   in every run, so when the live defense matrix completes, the report will
   show which layer did the work.
