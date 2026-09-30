@@ -65,7 +65,8 @@ resumable batch script.
 | `confirm-all` | `confirm-bypass` | 0 | 0 | 0 | 0 |
 
 Live defense verification was blocked by NIM free-tier instability (see
-Caveats). The defenses are verified **offline**: the 25-test suite includes
+Caveats). The defenses are verified **offline**: the 25-test suite from the
+original v0.2 batch (30 tests after `schema-scan` was added) includes
 direct defense-efficacy tests with scripted adversarial models — `desc-pin`
 restores swapped descriptions, `output-scan` redacts injected outputs, and
 `confirm-all` blocks destructive calls — all green. The 3-pass-per-defense
