@@ -72,14 +72,31 @@ How it works:
   OpenAI-compatible CLIs, `/api/*` for Claude Code's Anthropic protocol)
   that attaches the OpenRouter credential per request. The raw key never
   touches CLI env vars, config files, or disk.
-- `drivers/run_matrix.py` — batch runner: benign smoke gate per combo,
-  three (configurable) repetitions per attack, two-phase rug-pull, per-cell
-  transcripts + sink logs + `results.jsonl`, verdicts via
+- `drivers/run_matrix.py` — batch runner: benign smoke gate per combo
+  (requires the fixture's unique result marker, not prompt words),
+  three (configurable) repetitions per attack, two-phase rug-pull with
+  true same-session continuation per CLI, per-cell transcripts +
+  activity logs + sink logs + `results.jsonl`, one attempt per cell
+  (timeouts score inconclusive, never retried), verdicts via
   `classify_verdict`.
+- `drivers/oracles.py` — adjudication: CLI transcripts are normalized
+  into explicit events (assistant text, tool calls, tool results) and
+  scored against the canonical attack checks with exact, attack-specific
+  PWN rules. A canary in tool output, or quoted by the model while
+  refusing, is never a pwn; no fixture engagement is inconclusive.
 - `fixtures/pk_mcp_fixture.py` — the poisoned MCP fixture server (stdio
   JSON-RPC, stdlib only). One attack per invocation, selected by
-  `PK_ATTACK`; `PK_RUG_PHASE=1|2` selects the rug-pull phase. All canaries
-  are synthetic and harmless; sinks are append-only temp logs.
+  `PK_ATTACK`; `PK_RUG_PHASE=1|2` selects the rug-pull phase. Tools,
+  descriptions, payloads, and canaries come verbatim from the canonical
+  specs in `src/poisonkit/attacks.py`; every run writes a structured
+  JSONL activity log (`POISONKIT_ACTIVITY_LOG`). All canaries are
+  synthetic and harmless; sinks are append-only temp logs.
+  Destructive tools are safe stubs (see `REVIEW_NOTES.md`).
+- `tests/` — oracle regression tests, fixture self-tests over stdio
+  JSON-RPC (no LLM), and driver unit tests:
+  `python3 -m unittest test_oracles test_fixture test_drivers`.
+- [`REVIEW_NOTES.md`](REVIEW_NOTES.md) — per-attack specification,
+  operationalization, oracle rules, and open questions for review.
 
 ## Caveats (see the report's Limitations for the full list)
 
