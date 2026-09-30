@@ -132,6 +132,25 @@ attacks, but falls for the shadow tool, the fake policy bypass, and the
 exfil chain just as reliably. Capability is attack-class-specific — it is
 not a general fix for tool poisoning.
 
+## CLI Attack Matrix
+
+Beyond the reference victim, poisonkit was run as a black-box evaluation
+against three real product CLI coding agents — **Codex CLI**, **GitHub
+Copilot CLI**, and **Claude Code** — in three phases: a fixed-model harness
+comparison (shared `deepseek/deepseek-v4-flash-0731`), vendor-aligned models
+(`openai/gpt-5.3-codex`, `openai/gpt-5.4`, `anthropic/claude-sonnet-4.6`), and
+frontier models (`openai/gpt-6-luna`, `openai/gpt-6-sol`,
+`anthropic/claude-sonnet-5`, plus a targeted `anthropic/claude-opus-5.5`
+probe). Six tool-metadata poisoning attacks plus one tool-output
+indirect-injection comparison, more than 200 runs.
+
+The core finding: tool-metadata poisoning is an **interaction problem** —
+security depends on the model, the agent harness, and where malicious
+instructions enter the tool interface, not on any one of them alone.
+
+Full report and reproducible drivers/fixtures: [`cli-attack-matrix/`](cli-attack-matrix/)
+([PDF](cli-attack-matrix/report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.pdf)).
+
 ## How it works
 
 ```
