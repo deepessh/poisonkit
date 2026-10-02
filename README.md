@@ -44,7 +44,8 @@ poisonkit run --attack all
 ```
 
 The default provider is a generic OpenAI-compatible adapter, so any
-OpenAI-style endpoint works with just env vars — no extra flags.
+OpenAI-style endpoint with sufficient tool/function-calling compatibility
+works with just env vars — no extra flags.
 
 Notes from live testing (2026-09-16):
 
