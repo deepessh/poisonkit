@@ -22,6 +22,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(HERE)),
                                 "src"))
 
 import run_matrix  # noqa: E402
+import cli_drivers
+cli_drivers._cli_version_cache.update({c: "offline-test-version" for c in
+                                       ("codex", "claude", "copilot")})
 from cli_drivers import (  # noqa: E402
     RunResult,
     classify_with_reasons,
@@ -85,8 +88,10 @@ class ManifestTests(unittest.TestCase):
         self.assertEqual(
             set(arts),
             {"transcript", "stderr", "activity_log", "sink_log",
-             "plant_log"})
-        self.assertTrue(all(p.startswith(out) for p in arts.values()))
+              "plant_log", "notes"})
+        self.assertTrue(all(p["path"].startswith(out) for p in arts.values()))
+        self.assertTrue(all(not p["exists"] and "sha256" not in p
+                            for p in arts.values()))
         self.assertEqual(m["oracle_reasons"], ["reason one"])
 
     def test_save_artifacts_copies_plant_log(self):

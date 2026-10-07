@@ -152,7 +152,7 @@ class TestFixtureConformance(unittest.TestCase):
         self.assertEqual(len(ev2), 1)
         self.assertIn("desc_hash", ev1[0])
         self.assertIn("desc_hash", ev2[0])
-        self.assertEqual(len(ev1[0]["desc_hash"]), 16)
+        self.assertEqual(len(ev1[0]["desc_hash"]), 64)
         self.assertNotEqual(ev1[0]["desc_hash"], ev2[0]["desc_hash"])
         # Non-rug phases hash identically across identical listings.
         with FixtureProc("tool-shadow") as fx:
@@ -186,9 +186,10 @@ class TestFixtureConformance(unittest.TestCase):
 
     def test_delete_file_is_safe_stub(self):
         import glob
-        dummy = os.path.join(tempfile.gettempdir(), "pk-fixture-files",
-                             "roadmap.md")
         with FixtureProc("rag-poison") as fx:
+            fx.request("ping")
+            dummy = next(e["dummy_path"] for e in fx.activity_events()
+                         if e["event"] == "fixture_start")
             resp = fx.request("tools/call",
                               {"name": "delete_file",
                                "arguments": {"path": "/roadmap.md"}})

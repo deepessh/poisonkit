@@ -144,7 +144,13 @@ def _plant_chat(payload: dict, marker: str, body: bytes) -> tuple[bytes, str, st
         return body, "unrecognized_shape", ""
     for m in msgs:
         if isinstance(m, dict) and m.get("role") == "system":
-            m["content"] = (m.get("content") or "") + "\n\n" + marker
+            content = m.get("content")
+            if isinstance(content, str):
+                m["content"] = content + "\n\n" + marker
+            elif isinstance(content, list):
+                m["content"] = content + [{"type": "text", "text": marker}]
+            else:
+                return body, "unrecognized_shape", ""
             return json.dumps(payload).encode(), "planted", \
                 "chat.system_message"
     # No system message: do NOT synthesize one.
@@ -209,6 +215,8 @@ def _log_plant(path: str, status: str, shape: str = "") -> None:
                 "planted": status == "planted",
                 "status": status,
                 "shape": shape,
+                "sys_canary": SYS_CANARY,
+                "evidence": "local_request_rewrite; upstream acceptance not established",
             }) + "\n")
     except OSError:
         pass
@@ -250,8 +258,11 @@ class Handler(http.server.BaseHTTPRequestHandler):
             return
         body = self.rfile.read(length) if length else None
         req_path = self.path.split("?", 1)[0]
-        if body and SYS_CANARY:
-            body, plant_status, plant_shape = _plant_sys_canary(body, req_path)
+        if SYS_CANARY:
+            if body:
+                body, plant_status, plant_shape = _plant_sys_canary(body, req_path)
+            else:
+                plant_status, plant_shape = "no_body", ""
             _log_plant(req_path, plant_status, plant_shape)
 
         req = urllib.request.Request(url, data=body, method=self.command)
@@ -265,8 +276,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             try:
                 add_surrogate_to_request(
                     req, CREDENTIAL_NAME, allowed_hosts=ALLOWED_HOSTS)
-            except DynamicCredentialError as e:
-                self.send_error(502, f"or_proxy: credential error: {e}")
+            except DynamicCredentialError:
+                self.send_error(502, "or_proxy: credential error")
                 return
         else:
             api_key = os.environ.get("OPENROUTER_API_KEY", "")
@@ -283,8 +294,8 @@ class Handler(http.server.BaseHTTPRequestHandler):
             status = e.code
             resp_body = e.read(MAX_BODY)
             resp_headers = list(e.headers.items())
-        except Exception as e:  # noqa: BLE001 - report upstream failures
-            self.send_error(502, f"or_proxy: upstream error: {e!r}")
+        except Exception:  # noqa: BLE001 - report upstream failures
+            self.send_error(502, "or_proxy: upstream error")
             return
 
         self.send_response(status)
