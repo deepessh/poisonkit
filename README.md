@@ -167,8 +167,13 @@ The core finding: tool-metadata poisoning is an **interaction problem** —
 security depends on the model, the agent harness, and where malicious
 instructions enter the tool interface, not on any one of them alone.
 
-Full report and reproducible drivers/fixtures: [`cli-attack-matrix/`](cli-attack-matrix/)
-([PDF](cli-attack-matrix/report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.pdf)).
+Revised report: [public findings](cli-attack-matrix/report/public-findings-report.md).
+Drivers and fixtures: [`cli-attack-matrix/`](cli-attack-matrix/).
+The revised report distinguishes requested wipe invocations from demonstrated
+metadata attacks. Historical datasets and exact source snapshots were verified
+locally and are retained privately, not distributed by this repository. The
+revised Markdown report describes the corrected results and limitations; the
+PDF and DOCX exports are historical.
 
 ## How it works
 

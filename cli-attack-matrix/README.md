@@ -39,10 +39,15 @@ the model, the agent harness, and where malicious instructions enter the
 tool interface — not on any one of them alone. Full results, methodology,
 and limitations are in the findings report:
 
-- [`report/Poisonkit CLI Attack Matrix — Public Findings Report.pdf`](report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.pdf)
-- [`report/Poisonkit CLI Attack Matrix — Public Findings Report.docx`](report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.docx)
+- [Revised findings report](report/public-findings-report.md) — corrected interpretation and explicit release-evidence limitations.
+- [Historical PDF](report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.pdf)
+- [Historical DOCX](report/Poisonkit%20CLI%20Attack%20Matrix%20—%20Public%20Findings%20Report.docx)
 
-## Reproduce it
+Historical run artifacts and source archives were verified locally and are
+retained privately. They are not downloadable from this repository; the revised
+report describes the corrected results and their evidence limitations.
+
+## Run new experiments
 
 Prerequisites: Python 3.10+, the three CLIs installed
 (`codex`, `copilot`, `claude`), and an OpenRouter API key.
@@ -97,7 +102,8 @@ How it works:
   Destructive tools are safe stubs (see `REVIEW_NOTES.md`).
 - `tests/` — oracle regression tests, fixture self-tests over stdio
   JSON-RPC (no LLM), and driver unit tests:
-  `python3 -m unittest test_oracles test_fixture test_drivers`.
+  From the Poisonkit root, run the complete matrix suite with
+  `PYTHONPATH=src python3 -m unittest discover -s cli-attack-matrix/tests -v`.
 - [`REVIEW_NOTES.md`](REVIEW_NOTES.md) — per-attack specification,
   operationalization, oracle rules, and open questions for review.
 
@@ -130,7 +136,9 @@ remains part of the existing protocol.
 
 The PDF and DOCX reports above are historical and have not been regenerated.
 These changes do not re-score the original 84 attack runs or establish equivalence
-with the author's unavailable correction commit `91ab70e`. Concurrent source edits can invalidate resume
+with the historical correction commit `91ab70e`, now archived with the evidence.
+The separate historical replay uses that archived source, not these prospective
+rules. Concurrent source edits can invalidate resume
 identity or disagree with the runner's already-imported canonical specs; keep
 source fixed during a run. The attack-spec edits here change checks and labels;
 the served tool definitions are unchanged.
